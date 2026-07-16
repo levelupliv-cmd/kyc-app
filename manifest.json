@@ -1,0 +1,12 @@
+{
+  "name": "KYC Simulation App",
+  "short_name": "KYC Sim",
+  "description": "Secure proxy configuration and facial verification simulation",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1a2e",
+  "theme_color": "#0b1a2e",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><
