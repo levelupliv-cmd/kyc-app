@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="KYC Simulation App - Proxy configuration and facial verification">
+  <meta name="theme-color" content="#0b1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>KYC Simulation</title>
+  
+  <!-- Open Graph / Social Media -->
+  <meta property="og:title" content="KYC Simulation App">
+  <meta property="og:description" content="Secure proxy configuration and facial verification simulation">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://kyc-sim.vercel.app">
+  <meta name="twitter:card" content="summary_large_image">
+  
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪪</text></svg>">
+  
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <style>
+    /* Reset & Base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0b1a2e 0%, #1a2f44 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      margin: 0;
+      position: relative;
+    }
+
+    /* Loading Screen */
+    #loadingScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #0b1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.8s ease;
+    }
+
+    #loadingScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #1f3b52;
+      border-top: 4px solid #3b9eff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: #b3d6f0;
+      margin-top: 20px;
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      opacity: 0.7;
+    }
+
+    /* Main Card */
+    .card {
+      max-width: 480px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 48px;
+      padding: 28px 22px 34px;
+      box-shadow: 0 25px 50px -8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 20%, rgba(59, 158, 255, 0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #f0f9ff;
+      font-weight: 500;
+      font-size: 1.6rem;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      position: relative;
+    }
+
+    h1 i {
+      color: #5fc3ff;
+      font-size: 1.8rem;
+      filter: drop-shadow(0 0 8px #3b9eff55);
+    }
+
+    .subhead {
+      color: #b3d6f0;
+      font-size: 0.9rem;
+      margin-bottom: 28px;
+      border-left: 3px solid #3b9eff;
+      padding-left: 14px;
+      opacity: 0.8;
+      position: relative;
+    }
+
+    .version-tag {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(59, 158, 255, 0.15);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.6rem;
+      color: #8bb3d0;
+      border: 1px solid rgba(59, 158, 255, 0.2);
+      letter-spacing: 0.5px;
+    }
+
+    /* Step Indicator */
+    .step-indicator {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      position: relative;
+      padding: 0 4px;
+    }
+
+    .step-indicator::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 20px;
+      right: 20px;
+      height: 3px;
+      background: #2d4a66;
+      border-radius: 6px;
+      z-index: 0;
+    }
+
+    .step-dot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1;
+      cursor: default;
+    }
+
+    .step-dot .circle {
+      width: 38px;
+      height: 38px;
+      background: #1f3b52;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9bbfd8;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 2px solid #2f4d68;
+      transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .step-dot.active .circle {
+      background: #3b9eff;
+      border-color: #6bb4ff;
+      color: white;
+      box-shadow: 0 0 20px #3b9eff99;
+      transform: scale(1.05);
+    }
+
+    .step-dot.completed .circle {
+      background: #1f8b4c;
+      border-color: #34c775;
+      color: white;
+      box-shadow: 0 0 15px #34c77555;
+    }
+
+    .step-dot .label {
+      margin-top: 8px;
+      font-size: 0.65rem;
+      color: #8bb3d0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+
+    .step-dot.active .label {
+      color: #b8dfff;
+    }
+
+    .step-dot.completed .label {
+      color: #7fd9a0;
+    }
+
+    /* Panels */
+    .panel {
+      background: rgba(12, 27, 43, 0.6);
+      border-radius: 32px;
+      padding: 24px 20px;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      box-shadow: inset 0 4px 12px rgba(0,0,0,0.3);
+      margin-bottom: 22px;
+      transition: 0.25s ease;
+      position: relative;
+    }
+
+    .panel-title {
+      color: #c5e0f5;
+      font-size: 0.9rem;
+      letter-spacing: 0.3px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-title i {
+      color: #5fc3ff;
+      width: 20px;
+    }
+
+    /* Inputs */
+    .input-group {
+      margin-bottom: 18px;
+    }
+
+    .input-group label {
+      display: block;
+      color: #b0d0e8;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+      opacity: 0.7;
+    }
+
+    .input-field {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid #314f6b;
+      border-radius: 40px;
+      padding: 14px 20px;
+      color: #eaf3fc;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.15s;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+
+    .input-field:focus {
+      border-color: #5fc3ff;
+      background: rgba(0, 20, 40, 0.6);
+      box-shadow: 0 0 0 3px #3b9eff33;
+    }
+
+    .input-field::placeholder {
+      color: #5a7f9c;
+      font-weight: 300;
+      font-size: 0.9rem;
+    }
+
+    .proxy-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .proxy-row .input-group {
+      flex: 1;
+    }
+
+    /* Buttons */
+    .btn {
+      background: #1f4970;
+      border: none;
+      border-radius: 60px;
+      padding: 14px 20px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: white;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      border: 1px solid #3b6f99;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .btn:hover::after {
+      opacity: 1;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2b7be0, #1f5bb5);
+      border-color: #4f93f0;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      background: #3a8af0;
+      box-shadow: 0 8px 20px #1f5bb566;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      filter: grayscale(0.6);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #1f8b4c, #156b39);
+      border-color: #34c775;
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      background: #28a35b;
+      box-shadow: 0 8px 20px #1f8b4c66;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #4e7fa0;
+      color: #c5e0f5;
+    }
+
+    .btn-outline:hover {
+      background: rgba(59, 158, 255, 0.1);
+      border-color: #6bb4ff;
+      transform: translateY(-2px);
+    }
+
+    .flex-btns {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .flex-btns .btn {
+      flex: 1;
+    }
+
+    /* Camera */
+    .camera-box {
+      background: #0a1a28;
+      border-radius: 32px;
+      overflow: hidden;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border: 1px solid #2b4d6b;
+      margin-bottom: 16px;
+      min-height: 240px;
+    }
+
+    #video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #0a121e;
+      transform: scaleX(-1);
+    }
+
+    .camera-placeholder {
+      color: #4a7a9a;
+      font-size: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .camera-placeholder i {
+      font-size: 3rem;
+      opacity: 0.5;
+    }
+
+    .face-hint {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      padding: 10px 20px;
+      border-radius: 60px;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border: 1px solid #ffffff22;
+      white-space: nowrap;
+      min-width: 160px;
+      justify-content: center;
+    }
+
+    .face-hint i {
+      font-size: 1.2rem;
+      transition: color 0.3s;
+    }
+
+    /* Status & Complete */
+    .status-badge {
+      background: #1f3b52;
+      padding: 6px 14px;
+      border-radius: 60px;
+      font-size: 0.7rem;
+      color: #b3d6f0;
+      display: inline-block;
+    }
+
+    .complete-msg {
+      background: linear-gradient(135deg, #0d3322, #0a2619);
+      border: 1px solid #34c77555;
+      border-radius: 40px;
+      padding: 18px 20px;
+      color: #b0f0cf;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 18px 0 8px;
+      animation: slideUp 0.5s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .complete-msg i {
+      font-size: 2.2rem;
+      color: #34c775;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: #b3d6f0;
+      font-size: 0.9rem;
+    }
+
+    .summary-item:last-child {
+      border-bottom: none;
+    }
+
+    .summary-item .label {
+      opacity: 0.7;
+    }
+
+    .summary-item .value {
+      color: #eaf3fc;
+      font-weight: 500;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .mt-2 {
+      margin-top: 12px;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .small-note {
+      font-size: 0.7rem;
+      color: #6f95b5;
+      margin-top: 6px;
+    }
+
+    /* Offline banner */
+    .offline-banner {
+      background: rgba(255, 193, 7, 0.15);
+      border: 1px solid rgba(255, 193, 7, 0.3);
+      border-radius: 12px;
+      padding: 8px 16px;
+      color: #ffd966;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* Responsive */
+    @media (max-width: 420px) {
+      .card { 
+        padding: 20px 14px; 
+        border-radius: 32px;
+      }
+      .proxy-row { 
+        flex-direction: column; 
+        gap: 0; 
+      }
+      .flex-btns {
+        flex-direction: column;
+      }
+      .face-hint {
+        font-size: 0.75rem;
+        padding: 8px 14px;
+        min-width: 130px;
+        bottom: 12px;
+      }
+      .version-tag {
+        display: none;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .card {
+        padding: 36px 32px 40px;
+      }
+    }
+
+    /* Print styles */
+    @media print {
+      .btn, .face-hint, .step-indicator {
+        display: none !important;
+      }
+      body {
+        background: white;
+      }
+      .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loadingScreen">
+  <div class="loader"></div>
+  <div class="loading-text">Loading KYC Simulation...</div>
+</div>
+
+<!-- Offline Banner -->
+<div class="offline-banner" id="offlineBanner" style="display:none; max-width:480px; margin: 0 auto 16px;">
+  <i class="fas fa-wifi-slash"></i>
+  <span>You're offline. Some features may be limited.</span>
+</div>
+
+<!-- Main App -->
+<div class="card" id="app">
+  <span class="version-tag">v1.0.0</span>
+  
+  <h1>
+    <i class="fas fa-id-card"></i> KYC·sim
+  </h1>
+  <div class="subhead">
+    <i class="fas fa-shield-alt" style="margin-right: 8px;"></i> Secure proxy + facial verification
+  </div>
+
+  <!-- Step dots -->
+  <div class="step-indicator">
+    <div class="step-dot active" id="step1Dot">
+      <div class="circle">1</div>
+      <div class="label">Proxy</div>
+    </div>
+    <div class="step-dot" id="step2Dot">
+      <div class="circle">2</div>
+      <div class="label">Face</div>
+    </div>
+    <div class="step-dot" id="step3Dot">
+      <div class="circle">3</div>
+      <div class="label">Complete</div>
+    </div>
+  </div>
+
+  <!-- STEP 1: Proxy -->
+  <div id="step1Panel" class="panel">
+    <div class="panel-title"><i class="fas fa-network-wired"></i> VPN proxy details</div>
+    <div class="proxy-row">
+      <div class="input-group">
+        <label><i class="fas fa-server"></i> Hostname</label>
+        <input type="text" class="input-field" id="proxyHost" value="10.104.60.76" placeholder="10.104.60.76" autocomplete="off">
+      </div>
+      <div class="input-group">
+        <label><i class="fas fa-plug"></i> Port</label>
+        <input type="number" class="input-field" id="proxyPort" value="8080" placeholder="8080" autocomplete="off">
+      </div>
+    </div>
+    <div class="small-note"><i class="fas fa-info-circle"></i> Default proxy: 10.104.60.76:8080</div>
+    <button class="btn btn-primary" id="nextStep1Btn"><i class="fas fa-arrow-right"></i> Next · Face verification</button>
+  </div>
+
+  <!-- STEP 2: Face verification -->
+  <div id="step2Panel" class="panel hidden">
+    <div class="panel-title"><i class="fas fa-camera"></i> Face verification</div>
+    <div class="camera-box">
+      <video id="video" autoplay playsinline muted></video>
+      <div class="camera-placeholder" id="cameraPlaceholder">
+        <i class="fas fa-camera"></i>
+        <span>Camera loading...</span>
+      </div>
+      <div class="face-hint" id="faceHint">
+        <i class="fas fa-circle" id="hintIcon" style="color: #ffbb33;"></i>
+        <span id="hintText">Center your face</span>
+      </div>
+    </div>
+    <div class="flex-btns">
+      <button class="btn btn-outline" id="resetFaceBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+      <button class="btn btn-primary" id="verifyFaceBtn"><i class="fas fa-check-circle"></i> Verify</button>
+    </div>
+    <div class="small-note text-center" style="margin-top: 6px;">
+      <i class="fas fa-sync-alt fa-fw"></i> Move head: left · right · up · center
+    </div>
+    <button class="btn btn-outline" id="backToProxyBtn" style="margin-top: 16px;"><i class="fas fa-chevron-left"></i> Back to proxy</button>
+  </div>
+
+  <!-- STEP 3: Complete -->
+  <div id="step3Panel" class="panel hidden">
+    <div class="complete-msg">
+      <i class="fas fa-check-circle"></i>
+      <div>
+        <strong style="font-size:1.1rem;">KYC complete</strong>
+        <br>
+        <span style="font-size:0.85rem; opacity:0.9;">Verification successful</span>
+      </div>
+    </div>
+    <div style="background: #0a1f30; border-radius: 24px; padding: 16px; margin: 12px 0; border:1px solid #2b5f7a;">
+      <div class="summary-item">
+        <span class="label"><i class="fas fa-user-check"></i> Face match</span>
+        <span class="value" style="color:#34c775;">100%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label"><i class="fas fa-map-pin"></i> Proxy</span>
+        <span class="value" id="displayProxyInfo">10.104.60.76:8080</span>
+      </div>
+      <div class="summary-item">
+        <span class="label"><i class="fas fa-clock"></i> Timestamp</span>
+        <span class="value" id="timestampDisplay">--</span>
+      </div>
+    </div>
+    <button class="btn btn-success" id="resetAllBtn"><i class="fas fa-redo"></i> Start over</button>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Hide loading screen
+    setTimeout(() => {
+      document.getElementById('loadingScreen').classList.add('hidden');
+    }, 600);
+
+    // Check offline status
+    if (!navigator.onLine) {
+      document.getElementById('offlineBanner').style.display = 'flex';
+    }
+    window.addEventListener('offline', () => {
+      document.getElementById('offlineBanner').style.display = 'flex';
+    });
+    window.addEventListener('online', () => {
+      document.getElementById('offlineBanner').style.display = 'none';
+    });
+
+    // DOM refs
+    const step1Dot = document.getElementById('step1Dot');
+    const step2Dot = document.getElementById('step2Dot');
+    const step3Dot = document.getElementById('step3Dot');
+
+    const step1Panel = document.getElementById('step1Panel');
+    const step2Panel = document.getElementById('step2Panel');
+    const step3Panel = document.getElementById('step3Panel');
+
+    const proxyHost = document.getElementById('proxyHost');
+    const proxyPort = document.getElementById('proxyPort');
+    const nextStep1Btn = document.getElementById('nextStep1Btn');
+    const backToProxyBtn = document.getElementById('backToProxyBtn');
+    const verifyFaceBtn = document.getElementById('verifyFaceBtn');
+    const resetFaceBtn = document.getElementById('resetFaceBtn');
+    const resetAllBtn = document.getElementById('resetAllBtn');
+
+    const video = document.getElementById('video');
+    const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+    const hintText = document.getElementById('hintText');
+    const hintIcon = document.getElementById('hintIcon');
+    const displayProxyInfo = document.getElementById('displayProxyInfo');
+    const timestampDisplay = document.getElementById('timestampDisplay');
+
+    // State
+    let stream = null;
+    let faceState = 'center';
+    let verificationDone = false;
+    let isCameraReady = false;
+
+    // Helper: update step dots
+    function setStep(step) {
+      [step1Dot, step2Dot, step3Dot].forEach((dot, idx) => {
+        const num = idx + 1;
+        dot.classList.remove('active', 'completed');
+        if (num < step) dot.classList.add('completed');
+        else if (num === step) dot.classList.add('active');
+      });
+    }
+
+    // Show panel
+    function showPanel(step) {
+      step1Panel.classList.add('hidden');
+      step2Panel.classList.add('hidden');
+      step3Panel.classList.add('hidden');
+      if (step === 1) step1Panel.classList.remove('hidden');
+      else if (step === 2) step2Panel.classList.remove('hidden');
+      else if (step === 3) step3Panel.classList.remove('hidden');
+      setStep(step);
+    }
+
+    // Camera handling
+    async function startCamera() {
+      if (stream) {
+        cameraPlaceholder.classList.add('hidden');
+        return;
+      }
+      try {
+        cameraPlaceholder.classList.remove('hidden');
+        const constraints = { 
+          video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 640 } },
+          audio: false 
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        await video.play();
+        isCameraReady = true;
+        cameraPlaceholder.classList.add('hidden');
+      } catch (err) {
+        cameraPlaceholder.innerHTML = `
+          <i class="fas fa-exclamation-triangle" style="color:#ff6b6b;"></i>
+          <span style="color:#ff6b6b;">Camera access denied</span>
+          <span style="font-size:0.7rem; opacity:0.7;">Please allow camera permissions</span>
+        `;
+        console.warn('camera error', err);
+      }
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+        video.srcObject = null;
+        isCameraReady = false;
+        cameraPlaceholder.classList.remove('hidden');
+        cameraPlaceholder.innerHTML = `
+          <i class="fas fa-camera"></i>
+          <span>Camera ready</span>
+        `;
+      }
+    }
+
+    // Face hint
+    function setFaceHint(state) {
+      faceState = state;
+      const map = {
+        'center': { text: 'Center your face', icon: 'fa-circle', color: '#ffbb33' },
+        'left': { text: 'Turn head LEFT', icon: 'fa-arrow-left', color: '#66b3ff' },
+        'right': { text: 'Turn head RIGHT', icon: 'fa-arrow-right', color: '#66b3ff' },
+        'up': { text: 'Look UP', icon: 'fa-arrow-up', color: '#66b3ff' }
+      };
+      const info = map[state] || map['center'];
+      hintText.textContent = info.text;
+      hintIcon.className = `fas ${info.icon}`;
+      hintIcon.style.color = info.color;
+    }
+
+    function cycleFacePosition() {
+      if (verificationDone) return;
+      const states = ['center', 'left', 'right', 'up', 'center'];
+      let idx = states.indexOf(faceState);
+      if (idx === -1 || idx === states.length - 1) idx = 0;
+      else idx++;
+      setFaceHint(states[idx]);
+    }
+
+    // Verification
+    function performVerification() {
+      if (verificationDone) return;
+      
+      verificationDone = true;
+      setFaceHint('center');
+      hintText.textContent = '✅ Verified';
+      hintIcon.className = 'fas fa-check-circle';
+      hintIcon.style.color = '#34c775';
+
+      const host = proxyHost.value.trim() || '10.104.60.76';
+      const port = proxyPort.value.trim() || '8080';
+      displayProxyInfo.textContent = `${host}:${port}`;
+      
+      // Set timestamp
+      const now = new Date();
+      timestampDisplay.textContent = now.toLocaleString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      setTimeout(() => {
+        showPanel(3);
+        stopCamera();
+      }, 500);
+    }
+
+    // Reset everything
+    function fullReset() {
+      stopCamera();
+      verificationDone = false;
+      isCameraReady = false;
+      setFaceHint('center');
+      showPanel(1);
+      if (!proxyHost.value) proxyHost.value = '10.104.60.76';
+      if (!proxyPort.value) proxyPort.value = '8080';
+      nextStep1Btn.disabled = false;
+      cameraPlaceholder.innerHTML = `
+        <i class="fas fa-camera"></i>
+        <span>Camera ready</span>
+      `;
+    }
+
+    // Event listeners
+    nextStep1Btn.addEventListener('click', async function() {
+      const host = proxyHost.value.trim();
+      const port = proxyPort.value.trim();
+      if (!host || !port) {
+        alert('Please enter both Proxy Hostname and Port.');
+        return;
+      }
+      displayProxyInfo.textContent = `${host}:${port}`;
+      
+      verificationDone = false;
+      showPanel(2);
+      setFaceHint('center');
+      await startCamera();
+    });
+
+    backToProxyBtn.addEventListener('click', function() {
+      if (verificationDone) {
+        if (!confirm('Verification in progress. Go back?')) return;
+      }
+      stopCamera();
+      verificationDone = false;
+      setFaceHint('center');
+      showPanel(1);
+    });
+
+    verifyFaceBtn.addEventListener('click', function() {
+      if (verificationDone) {
+        alert('Already verified!');
+        return;
+      }
+      if (!isCameraReady) {
+        alert('Please wait for camera to load.');
+        return;
+      }
+      if (faceState === 'center') {
+        alert('Please turn your head left, right, or up before verifying.');
+        setTimeout(() => { setFaceHint('left'); }, 300);
+        setTimeout(() => { setFaceHint('right'); }, 900);
+        setTimeout(() => { setFaceHint('up'); }, 1500);
+        setTimeout(() => { setFaceHint('center'); }, 2100);
+        return;
+      }
+      performVerification();
+    });
+
+    resetFaceBtn.addEventListener('click', function() {
+      if (verificationDone) {
+        verificationDone = false;
+        setFaceHint('center');
+        hintText.textContent = 'Center your face';
+        hintIcon.className = 'fas fa-circle';
+        hintIcon.style.color = '#ffbb33';
+      } else {
+        setFaceHint('center');
+      }
+    });
+
+    resetAllBtn.addEventListener('click', fullReset);
+
+    // Auto-cycle face positions
+    setInterval(() => {
+      if (!step2Panel.classList.contains('hidden')) {
+        if (!verificationDone && isCameraReady) {
+          cycleFacePosition();
+        }
+      }
+    }, 2800);
+
+    // Save to localStorage
+    function saveState() {
+      try {
+        localStorage.setItem('kyc_proxy_host', proxyHost.value);
+        localStorage.setItem('kyc_proxy_port', proxyPort.value);
+      } catch (e) {}
+    }
+
+    function loadState() {
+      try {
+        const host = localStorage.getItem('kyc_proxy_host');
+        const port = localStorage.getItem('kyc_proxy_port');
+        if (host) proxyHost.value = host;
+        if (port) proxyPort.value = port;
+      } catch (e) {}
+    }
+
+    proxyHost.addEventListener('change', saveState);
+    proxyPort.addEventListener('change', saveState);
+
+    // Initialize
+    loadState();
+    fullReset();
+    displayProxyInfo.textContent = `${proxyHost.value}:${proxyPort.value}`;
+
+    // Service Worker registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW registered:', reg))
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
+
+    // Handle visibility change - restart camera if needed
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !step2Panel.classList.contains('hidden') && !stream) {
+        startCamera();
+      }
+    });
+  })();
+</script>
+</body>
+</html>
